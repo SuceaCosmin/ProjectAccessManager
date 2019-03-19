@@ -11,22 +11,25 @@ import java.io.File;
 
 public class PacConfigurationHandler {
 
-    public ProjectAccessManagementConfigurationType loadConfiguration(String file) {
+    public ProjectAccessManagementConfigurationType loadConfiguration(File file) {
         try {
             JAXBContext context = JAXBContext.newInstance(ProjectAccessManagementConfigurationType.class);
             Unmarshaller unmarshaller = context.createUnmarshaller();
-            return (ProjectAccessManagementConfigurationType) unmarshaller.unmarshal(new File(file));
+            return (ProjectAccessManagementConfigurationType) unmarshaller.unmarshal(file);
         } catch (Exception e) {
             throw new PacConfigurationLoadingFailedException(e.getMessage());
         }
     }
 
-    public void saveConfiguration(ProjectAccessManagementConfigurationType config, String file) {
+    public void saveConfiguration(ProjectAccessManagementConfigurationType config, File file) {
         try {
+            if (!file.exists()) {
+                file.createNewFile();
+            }
             JAXBContext context = JAXBContext.newInstance(ProjectAccessManagementConfigurationType.class);
             Marshaller marshaller = context.createMarshaller();
             marshaller.setProperty(Marshaller.JAXB_FORMATTED_OUTPUT, Boolean.TRUE);
-            marshaller.marshal(config, new File(file));
+            marshaller.marshal(config, file);
         } catch (Exception e) {
             throw new PacConfigurationSavingFailedException(e.getMessage());
         }

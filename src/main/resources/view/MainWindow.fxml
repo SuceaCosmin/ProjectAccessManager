@@ -18,8 +18,8 @@
     <center>
         <Pane prefHeight="200.0" prefWidth="200.0" BorderPane.alignment="CENTER">
             <children>
-                <Button fx:id="addUser" layoutX="21.0" layoutY="21.0" mnemonicParsing="false" text="Add User"
-                        onAction="#AddUser"/>
+                <Button fx:id="addUser" layoutX="21.0" layoutY="21.0" mnemonicParsing="false" onAction="#AddUser"
+                        text="Add User"/>
                 <ListView fx:id="userListView" layoutX="21.0" layoutY="76.0" prefHeight="237.0" prefWidth="316.0"/>
             </children>
         </Pane>
@@ -29,6 +29,10 @@
             <menus>
                 <Menu mnemonicParsing="false" text="File">
                     <items>
+                        <MenuItem mnemonicParsing="false" onAction="#OpenConfiguration" text="Open"/>
+                        <MenuItem mnemonicParsing="false" onAction="#SaveConfigurationToFile" text="Save"/>
+                        <MenuItem mnemonicParsing="false" onAction="#SaveConfigurationToFile" text="Save as"/>
+                        <MenuItem mnemonicParsing="false" onAction="#OpenConfiguration" text="Recent Files"/>
                         <MenuItem mnemonicParsing="false" text="Close"/>
                     </items>
                 </Menu>

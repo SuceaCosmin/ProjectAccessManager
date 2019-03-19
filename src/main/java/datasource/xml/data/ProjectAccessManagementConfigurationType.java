@@ -1,25 +1,23 @@
 package datasource.xml.data;
 
-import core.data.User;
-
-import javax.xml.bind.annotation.XmlElementWrapper;
-import javax.xml.bind.annotation.XmlRootElement;
-import javax.xml.bind.annotation.XmlType;
+import javax.xml.bind.annotation.*;
 import java.util.ArrayList;
 import java.util.List;
 
-@XmlRootElement
-@XmlType(name = "ProjectAccessManagementConfiguration")
+@XmlRootElement(name = "ProjectAccessConfiguration")
+@XmlAccessorType(XmlAccessType.FIELD)
 public class ProjectAccessManagementConfigurationType {
 
     @XmlElementWrapper(name = "Users")
-    private List<User> users;
+    @XmlElement(name = "User")
+    private List<UserType> users;
 
-    public List<User> getUsers() {
+
+    public List<UserType> getUsers() {
         return new ArrayList<>(users);
     }
 
-    public void setUsers(List<User> users) {
+    public void setUsers(List<UserType> users) {
         this.users = users;
     }
 }
