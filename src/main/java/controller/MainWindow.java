@@ -14,6 +14,8 @@ import javafx.scene.layout.BorderPane;
 import javafx.stage.FileChooser;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import usersettings.UserSettingsHandler;
+import usersettings.data.UserSettings;
 
 import java.io.File;
 import java.util.List;
@@ -27,10 +29,56 @@ public class MainWindow {
 
     public TreeView treeView;
     public Button addUser;
+    public Menu recentFiles;
+
+    private UserSettings userSettings;
     public ListView<User> userListView;
 
-
     private ObservableList<User> userList = FXCollections.observableArrayList();
+
+    @FXML
+    private void initialize() {
+
+        loadUserSettings();
+
+        if (userSettings != null) {
+            configureRecentFiles();
+
+        }
+
+        userListView.setItems(userList);
+        userListView.setCellFactory(lv -> new ListCell<User>() {
+            @Override
+            protected void updateItem(User item, boolean empty) {
+                if (empty || item == null || item.getName() == null) {
+                    setText(null);
+                } else {
+                    setText(item.getName());
+                }
+            }
+        });
+        TreeItem<String> dummyItem = new TreeItem<>();
+    }
+
+    /**
+     * Method use to configured the last opened configuration under "Recent Files" menu tab.
+     */
+    private void configureRecentFiles() {
+        try {
+            for (String path : userSettings.RecentlyOpenedFiles()) {
+                MenuItem item = new MenuItem();
+                item.setText(path);
+                item.setOnAction(event -> {
+                    OpenConfiguration(new File(path));
+                });
+
+                recentFiles.getItems().add(item);
+            }
+            recentFiles.setDisable(recentFiles.getItems().isEmpty());
+        } catch (Exception e) {
+            logger.warn("Failed to load recent files!");
+        }
+    }
 
     @FXML
     private void AddUser() {
@@ -69,6 +117,9 @@ public class MainWindow {
     private void OpenConfiguration() {
         FileChooser chooser = new FileChooser();
         chooser.setTitle("Open configuration");
+        if (userSettings.isLastBrowsedFolderAvailable()) {
+            chooser.setInitialDirectory(new File(userSettings.getLastBrowsedFolder()));
+        }
 
         FileChooser.ExtensionFilter exception = new FileChooser.ExtensionFilter("Xml Files", "*.xml");
         chooser.getExtensionFilters().add(exception);
@@ -78,6 +129,7 @@ public class MainWindow {
             logger.info("Open operation has been canceled!");
             return;
         }
+
         try {
             PacConfigurationHandler handler = new PacConfigurationHandler();
             ProjectAccessManagementConfigurationType config = handler.loadConfiguration(result);
@@ -85,9 +137,25 @@ public class MainWindow {
             UserEntryMapper mapper = new UserEntryMapper();
             List<User> importerUsers = mapper.mapToCoreType(config.getUsers());
             setUsers(importerUsers);
+            userSettings.setLastBrowsedFolder(result.getParent());
+            userSettings.AddRecentFile(result.getPath());
 
         } catch (Exception e) {
             logger.warn(String.format("Failed to load configuration from file(%s) due to: %s", result.getPath(), e.getMessage()));
+        }
+    }
+
+    private void OpenConfiguration(File file) {
+        try {
+            PacConfigurationHandler handler = new PacConfigurationHandler();
+            ProjectAccessManagementConfigurationType config = handler.loadConfiguration(file);
+
+            UserEntryMapper mapper = new UserEntryMapper();
+            List<User> importerUsers = mapper.mapToCoreType(config.getUsers());
+            setUsers(importerUsers);
+
+        } catch (Exception e) {
+            logger.warn(String.format("Failed to load configuration from file(%s) due to: %s", file.getPath(), e.getMessage()));
         }
     }
 
@@ -119,7 +187,6 @@ public class MainWindow {
 
     }
 
-
     /**
      * Method used to updated the list of users that visible inside the List view.
      *
@@ -133,21 +200,31 @@ public class MainWindow {
         userList.clear();
         userList.addAll(importedUsers);
     }
-    @FXML
-    private void initialize() {
 
 
-        userListView.setItems(userList);
-        userListView.setCellFactory(lv -> new ListCell<User>() {
-            @Override
-            protected void updateItem(User item, boolean empty) {
-                if (empty || item == null || item.getName() == null) {
-                    setText(null);
-                } else {
-                    setText(item.getName());
-                }
+    public void saveUserSettings() {
+
+        if (userSettings != null) {
+            try {
+                UserSettingsHandler handler = new UserSettingsHandler();
+                handler.SavePreferences(userSettings);
+            } catch (Exception e) {
+                logger.warn("Failed to save user userSettings!");
             }
-        });
-        TreeItem<String> dummyItem = new TreeItem<>();
+        }
     }
+
+    private void loadUserSettings() {
+        try {
+            UserSettingsHandler handler = new UserSettingsHandler();
+            if (handler.SettingsFileIsAvailable()) {
+                userSettings = handler.LoadPreferences();
+            } else {
+                userSettings = new UserSettings();
+            }
+        } catch (Exception e) {
+            logger.warn("Failed to loader user userSettings!");
+        }
+    }
+
 }

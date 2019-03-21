@@ -1,5 +1,6 @@
 package main;
 
+import controller.MainWindow;
 import javafx.application.Application;
 import javafx.fxml.FXMLLoader;
 import javafx.scene.Parent;
@@ -17,12 +18,15 @@ public class Run extends Application {
     }
 
     @Override
-    public void start(Stage primaryStage) throws Exception {
-
-        Parent root = FXMLLoader.load(getClass().getClassLoader().getResource("view/MainWindow.fxml"));
-        primaryStage.setTitle("Project Access Controller");
-        primaryStage.setScene(new Scene(root, 600, 400));
-        primaryStage.show();
+    public void start(Stage window) throws Exception {
+        FXMLLoader loader = new FXMLLoader();
+        loader.setLocation(getClass().getClassLoader().getResource("view/MainWindow.fxml"));
+        Parent root = loader.load();
+        MainWindow controller = loader.getController();
+        window.setTitle("Project Access Controller");
+        window.setOnCloseRequest(e -> controller.saveUserSettings());
+        window.setScene(new Scene(root, 600, 400));
+        window.show();
         logger.debug("Main window has started..");
     }
 }

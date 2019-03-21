@@ -32,7 +32,7 @@
                         <MenuItem mnemonicParsing="false" onAction="#OpenConfiguration" text="Open"/>
                         <MenuItem mnemonicParsing="false" onAction="#SaveConfigurationToFile" text="Save"/>
                         <MenuItem mnemonicParsing="false" onAction="#SaveConfigurationToFile" text="Save as"/>
-                        <MenuItem mnemonicParsing="false" onAction="#OpenConfiguration" text="Recent Files"/>
+                        <Menu fx:id="recentFiles" mnemonicParsing="false" text="Recent File(s)"/>
                         <MenuItem mnemonicParsing="false" text="Close"/>
                     </items>
                 </Menu>
