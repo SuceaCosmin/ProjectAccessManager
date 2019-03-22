@@ -1,16 +1,18 @@
 package controller;
 
+import controller.builder.TreeBuilder;
+import core.data.Configuration;
 import core.data.User;
 import datasource.xml.data.ProjectAccessManagementConfigurationType;
 import datasource.xml.data.UserType;
 import datasource.xml.handler.PacConfigurationHandler;
 import datasource.xml.mapper.UserEntryMapper;
-import javafx.collections.FXCollections;
-import javafx.collections.ObservableList;
+import javafx.application.Platform;
 import javafx.fxml.FXML;
 import javafx.fxml.FXMLLoader;
 import javafx.scene.control.*;
 import javafx.scene.layout.BorderPane;
+import javafx.scene.layout.Pane;
 import javafx.stage.FileChooser;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -28,13 +30,13 @@ public class MainWindow {
     public BorderPane mainPanel;
 
     public TreeView treeView;
-    public Button addUser;
+
     public Menu recentFiles;
+    public Pane contentPanel;
 
+    private Configuration configuration;
     private UserSettings userSettings;
-    public ListView<User> userListView;
 
-    private ObservableList<User> userList = FXCollections.observableArrayList();
 
     @FXML
     private void initialize() {
@@ -45,19 +47,57 @@ public class MainWindow {
             configureRecentFiles();
 
         }
+        configuration = new Configuration();
 
-        userListView.setItems(userList);
-        userListView.setCellFactory(lv -> new ListCell<User>() {
-            @Override
-            protected void updateItem(User item, boolean empty) {
-                if (empty || item == null || item.getName() == null) {
-                    setText(null);
-                } else {
-                    setText(item.getName());
-                }
+        TreeBuilder builder = new TreeBuilder();
+
+
+        treeView.setRoot(builder.buildTreeStructure(configuration));
+        treeView.setShowRoot(true);
+
+        treeView.getSelectionModel().selectedItemProperty().addListener((observable, oldValue, newValue) -> {
+            TreeItem item = (TreeItem) observable.getValue();
+
+            if (item != null) {
+
+                String value = item.getValue().toString();
+                switchDisplayedView(value);
+
             }
+
         });
-        TreeItem<String> dummyItem = new TreeItem<>();
+
+
+    }
+
+    private void switchDisplayedView(String value) {
+        if (value == null) {
+            return;
+        }
+
+        try {
+            if (value.equals(TreeBuilder.USERS)) {
+                FXMLLoader loader = new FXMLLoader();
+                loader.setLocation(getClass().getClassLoader().getResource("view/UserList.fxml"));
+
+                contentPanel.getChildren().add(loader.load());
+            } else {
+                clearContentView();
+            }
+        } catch (Exception e) {
+            logger.warn(String.format("Failed to render %s view due to: %s", value, e.getMessage()));
+        }
+
+    }
+
+    private void clearContentView() {
+        contentPanel.getChildren().clear();
+    }
+
+
+    @FXML
+    private void closeAction() {
+        Platform.exit();
     }
 
     /**
@@ -100,7 +140,8 @@ public class MainWindow {
                     CreateUser controller = loader.getController();
                     User user = controller.getUser();
                     logger.debug(user);
-                    userList.add(user);
+                    configuration.AddUser(user);
+                    loadTreeViewData();
                 } else if (result.get() == ButtonType.CANCEL) {
                     logger.debug("Creating new user operation canceled..");
                 }
@@ -136,10 +177,12 @@ public class MainWindow {
 
             UserEntryMapper mapper = new UserEntryMapper();
             List<User> importerUsers = mapper.mapToCoreType(config.getUsers());
-            setUsers(importerUsers);
+            configuration = new Configuration();
+            configuration.AddAllUsers(importerUsers);
             userSettings.setLastBrowsedFolder(result.getParent());
             userSettings.AddRecentFile(result.getPath());
 
+            loadTreeViewData();
         } catch (Exception e) {
             logger.warn(String.format("Failed to load configuration from file(%s) due to: %s", result.getPath(), e.getMessage()));
         }
@@ -152,8 +195,9 @@ public class MainWindow {
 
             UserEntryMapper mapper = new UserEntryMapper();
             List<User> importerUsers = mapper.mapToCoreType(config.getUsers());
-            setUsers(importerUsers);
-
+            configuration = new Configuration();
+            configuration.AddAllUsers(importerUsers);
+            loadTreeViewData();
         } catch (Exception e) {
             logger.warn(String.format("Failed to load configuration from file(%s) due to: %s", file.getPath(), e.getMessage()));
         }
@@ -174,7 +218,7 @@ public class MainWindow {
         }
         try {
             UserEntryMapper mapper = new UserEntryMapper();
-            List<UserType> users = mapper.mapToDataSourceType(userList);
+            List<UserType> users = mapper.mapToDataSourceType(configuration.getUserList());
             ProjectAccessManagementConfigurationType config = new ProjectAccessManagementConfigurationType();
             config.setUsers(users);
 
@@ -185,20 +229,6 @@ public class MainWindow {
             logger.warn(String.format("Failed to Store configuration to system(%s) due to:%s", file.getPath(), e.getMessage()));
         }
 
-    }
-
-    /**
-     * Method used to updated the list of users that visible inside the List view.
-     *
-     * @param importedUsers represents a list of users will be displayed on the List View.
-     */
-    private void setUsers(List<User> importedUsers) {
-
-        if (importedUsers == null) {
-            throw new IllegalArgumentException("importedUsers is null!");
-        }
-        userList.clear();
-        userList.addAll(importedUsers);
     }
 
 
@@ -225,6 +255,17 @@ public class MainWindow {
         } catch (Exception e) {
             logger.warn("Failed to loader user userSettings!");
         }
+    }
+
+    private void loadTreeViewData() {
+
+
+        TreeBuilder builder = new TreeBuilder();
+        TreeItem rootNode = builder.buildTreeStructure(configuration);
+
+        treeView.setRoot(rootNode);
+        treeView.setShowRoot(true);
+        rootNode.setExpanded(true);
     }
 
 }

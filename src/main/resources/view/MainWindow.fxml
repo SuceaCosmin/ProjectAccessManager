@@ -6,7 +6,6 @@
 <?import javafx.scene.control.MenuBar?>
 <?import javafx.scene.control.MenuItem?>
 <?import javafx.scene.control.ScrollPane?>
-<?import javafx.scene.control.TitledPane?>
 <?import javafx.scene.control.TreeView?>
 <?import javafx.scene.layout.BorderPane?>
 <?import javafx.scene.layout.Pane?>
@@ -16,12 +15,8 @@
             xmlns="http://javafx.com/javafx/8.0.172-ea" fx:controller="controller.MainWindow">
 
     <center>
-        <Pane prefHeight="200.0" prefWidth="200.0" BorderPane.alignment="CENTER">
-            <children>
-                <Button fx:id="addUser" layoutX="21.0" layoutY="21.0" mnemonicParsing="false" onAction="#AddUser"
-                        text="Add User"/>
-                <ListView fx:id="userListView" layoutX="21.0" layoutY="76.0" prefHeight="237.0" prefWidth="316.0"/>
-            </children>
+        <Pane fx:id="contentPanel" prefHeight="200.0" prefWidth="200.0" BorderPane.alignment="CENTER">
+
         </Pane>
     </center>
     <top>
@@ -33,7 +28,7 @@
                         <MenuItem mnemonicParsing="false" onAction="#SaveConfigurationToFile" text="Save"/>
                         <MenuItem mnemonicParsing="false" onAction="#SaveConfigurationToFile" text="Save as"/>
                         <Menu fx:id="recentFiles" mnemonicParsing="false" text="Recent File(s)"/>
-                        <MenuItem mnemonicParsing="false" text="Close"/>
+                        <MenuItem mnemonicParsing="false" onAction="#closeAction" text="Close"/>
                     </items>
                 </Menu>
                 <Menu mnemonicParsing="false" text="Edit">
@@ -50,14 +45,10 @@
         </MenuBar>
     </top>
     <left>
-        <TitledPane text="Projects">
+        <ScrollPane BorderPane.alignment="CENTER" fitToHeight="true">
             <content>
-                <ScrollPane fitToHeight="true" fitToWidth="true">
-                    <content>
-                        <TreeView fx:id="treeView"/>
-                    </content>
-                </ScrollPane>
+                <TreeView fx:id="treeView"/>
             </content>
-        </TitledPane>
+        </ScrollPane>
     </left>
 </BorderPane>
