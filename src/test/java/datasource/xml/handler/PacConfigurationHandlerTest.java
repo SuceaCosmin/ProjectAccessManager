@@ -21,7 +21,7 @@ public class PacConfigurationHandlerTest {
     public void saveConfiguration() {
         File file = new File(SAVE_LOCATION);
         PacConfigurationHandler handle = new PacConfigurationHandler();
-        handle.saveConfiguration(new ProjectAccessManagementConfigurationType(), file);
+        handle.saveConfigurationAs(new ProjectAccessManagementConfigurationType(), file);
         logger.info("Project Access Configuration has been save successfully as xml to " + SAVE_LOCATION);
     }
 }

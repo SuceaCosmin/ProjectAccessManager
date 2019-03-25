@@ -11,6 +11,7 @@ public class Configuration {
     private ObservableList<User> userList;
 
     public Configuration() {
+        userList = FXCollections.observableArrayList();
     }
 
     public void AddUser(User user) {

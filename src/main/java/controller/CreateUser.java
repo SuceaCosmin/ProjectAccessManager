@@ -6,7 +6,6 @@ import javafx.scene.control.TextField;
 
 public class CreateUser {
 
-
     public TextField nameField;
     public TextField ageField;
     private User user;
@@ -21,7 +20,6 @@ public class CreateUser {
         nameField.textProperty().bindBidirectional(user.nameProperty());
 
     }
-
 
     public User getUser() {
         user.setAge(Integer.parseInt(ageField.getText()));

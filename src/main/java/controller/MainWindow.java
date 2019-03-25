@@ -21,7 +21,6 @@ import usersettings.data.UserSettings;
 
 import java.io.File;
 import java.util.List;
-import java.util.Optional;
 
 public class MainWindow {
 
@@ -37,6 +36,12 @@ public class MainWindow {
     private Configuration configuration;
     private UserSettings userSettings;
 
+    private PacConfigurationHandler handler;
+
+
+    public MainWindow() {
+        configuration = new Configuration();
+    }
 
     @FXML
     private void initialize() {
@@ -47,10 +52,9 @@ public class MainWindow {
             configureRecentFiles();
 
         }
-        configuration = new Configuration();
+
 
         TreeBuilder builder = new TreeBuilder();
-
 
         treeView.setRoot(builder.buildTreeStructure(configuration));
         treeView.setShowRoot(true);
@@ -70,92 +74,27 @@ public class MainWindow {
 
     }
 
-    private void switchDisplayedView(String value) {
-        if (value == null) {
-            return;
-        }
-
-        try {
-            if (value.equals(TreeBuilder.USERS)) {
-                FXMLLoader loader = new FXMLLoader();
-                loader.setLocation(getClass().getClassLoader().getResource("view/UserList.fxml"));
-
-                contentPanel.getChildren().add(loader.load());
-            } else {
-                clearContentView();
-            }
-        } catch (Exception e) {
-            logger.warn(String.format("Failed to render %s view due to: %s", value, e.getMessage()));
-        }
-
-    }
-
-    private void clearContentView() {
-        contentPanel.getChildren().clear();
-    }
-
-
     @FXML
-    private void closeAction() {
-        Platform.exit();
-    }
+    public void newConfiguration() {
 
-    /**
-     * Method use to configured the last opened configuration under "Recent Files" menu tab.
-     */
-    private void configureRecentFiles() {
         try {
-            for (String path : userSettings.RecentlyOpenedFiles()) {
-                MenuItem item = new MenuItem();
-                item.setText(path);
-                item.setOnAction(event -> {
-                    OpenConfiguration(new File(path));
-                });
-
-                recentFiles.getItems().add(item);
-            }
-            recentFiles.setDisable(recentFiles.getItems().isEmpty());
-        } catch (Exception e) {
-            logger.warn("Failed to load recent files!");
-        }
-    }
-
-    @FXML
-    private void AddUser() {
-        try {
-            Dialog<ButtonType> dialog = new Dialog<>();
-            dialog.initOwner(mainPanel.getScene().getWindow());
-
-            FXMLLoader loader = new FXMLLoader();
-            loader.setLocation(getClass().getClassLoader().getResource("view/CreateUser.fxml"));
-            dialog.getDialogPane().setContent(loader.load());
-
-            dialog.getDialogPane().getButtonTypes().add(ButtonType.OK);
-            dialog.getDialogPane().getButtonTypes().add(ButtonType.CANCEL);
-            logger.debug("Creating new user..");
-            Optional<ButtonType> result = dialog.showAndWait();
-            if (result.isPresent()) {
-                if (result.get() == ButtonType.OK) {
-
-                    CreateUser controller = loader.getController();
-                    User user = controller.getUser();
-                    logger.debug(user);
-                    configuration.AddUser(user);
-                    loadTreeViewData();
-                } else if (result.get() == ButtonType.CANCEL) {
-                    logger.debug("Creating new user operation canceled..");
+            Alert alert = new Alert(Alert.AlertType.CONFIRMATION);
+            alert.setHeaderText("Creating a new configuration will result in loosing all previous configured data!");
+            alert.setContentText("Would you like to proceed?");
+            alert.showAndWait().ifPresent(rs -> {
+                if (rs == ButtonType.OK) {
+                    configuration = new Configuration();
+                    logger.warn("A new configuration has been created!(Previous data has been lost!)");
                 }
-            }
-
+            });
         } catch (Exception e) {
-            logger.warn("Failed to load AddUser view due to: " + e.getMessage());
-            logger.debug(e);
+            logger.warn("Exception occurred while creating a new configuration: " + e.getMessage());
         }
+
     }
 
-
     @FXML
-    private void OpenConfiguration() {
+    private void openConfiguration() {
         FileChooser chooser = new FileChooser();
         chooser.setTitle("Open configuration");
         if (userSettings.isLastBrowsedFolderAvailable()) {
@@ -188,9 +127,9 @@ public class MainWindow {
         }
     }
 
-    private void OpenConfiguration(File file) {
+    private void openConfiguration(File file) {
         try {
-            PacConfigurationHandler handler = new PacConfigurationHandler();
+            handler = new PacConfigurationHandler();
             ProjectAccessManagementConfigurationType config = handler.loadConfiguration(file);
 
             UserEntryMapper mapper = new UserEntryMapper();
@@ -203,6 +142,19 @@ public class MainWindow {
         }
     }
 
+    @FXML
+    private void SaveConfiguration() {
+        try {
+            UserEntryMapper mapper = new UserEntryMapper();
+            List<UserType> users = mapper.mapToDataSourceType(configuration.getUserList());
+            ProjectAccessManagementConfigurationType config = new ProjectAccessManagementConfigurationType();
+            config.setUsers(users);
+            handler.saveConfiguration(config);
+        } catch (Exception e) {
+            logger.warn(String.format("Failed to save configuration to %s due to : %s " + handler.getConfigurationPath(), e.getMessage()));
+        }
+
+    }
 
     @FXML
     private void SaveConfigurationToFile() {
@@ -223,13 +175,64 @@ public class MainWindow {
             config.setUsers(users);
 
             PacConfigurationHandler handle = new PacConfigurationHandler();
-            handle.saveConfiguration(config, file);
+            handle.saveConfigurationAs(config, file);
 
         } catch (Exception e) {
             logger.warn(String.format("Failed to Store configuration to system(%s) due to:%s", file.getPath(), e.getMessage()));
         }
 
     }
+
+    @FXML
+    private void closeAction() {
+        Platform.exit();
+    }
+
+    private void switchDisplayedView(String value) {
+        if (value == null) {
+            return;
+        }
+
+        try {
+            if (value.equals(TreeBuilder.USERS)) {
+                FXMLLoader loader = new FXMLLoader();
+                loader.setLocation(getClass().getClassLoader().getResource("view/UserList.fxml"));
+                contentPanel.getChildren().add(loader.load());
+                UserList controller = loader.getController();
+                controller.setConfiguration(configuration);
+            } else {
+                clearContentView();
+            }
+        } catch (Exception e) {
+            logger.warn(String.format("Failed to render %s view due to: %s", value, e.getMessage()));
+        }
+
+    }
+
+    private void clearContentView() {
+        contentPanel.getChildren().clear();
+    }
+
+    /**
+     * Method use to configured the last opened configuration under "Recent Files" menu tab.
+     */
+    private void configureRecentFiles() {
+        try {
+            for (String path : userSettings.RecentlyOpenedFiles()) {
+                MenuItem item = new MenuItem();
+                item.setText(path);
+                item.setOnAction(event -> {
+                    openConfiguration(new File(path));
+                });
+
+                recentFiles.getItems().add(item);
+            }
+            recentFiles.setDisable(recentFiles.getItems().isEmpty());
+        } catch (Exception e) {
+            logger.warn("Failed to load recent files!");
+        }
+    }
+
 
 
     public void saveUserSettings() {
@@ -267,5 +270,4 @@ public class MainWindow {
         treeView.setShowRoot(true);
         rootNode.setExpanded(true);
     }
-
 }

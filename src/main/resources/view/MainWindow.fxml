@@ -1,15 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
-<?import javafx.scene.control.Button?>
-<?import javafx.scene.control.ListView?>
-<?import javafx.scene.control.Menu?>
-<?import javafx.scene.control.MenuBar?>
-<?import javafx.scene.control.MenuItem?>
-<?import javafx.scene.control.ScrollPane?>
-<?import javafx.scene.control.TreeView?>
-<?import javafx.scene.layout.BorderPane?>
-<?import javafx.scene.layout.Pane?>
-
+<?import javafx.scene.control.*?>
+<?import javafx.scene.layout.*?>
 <BorderPane xmlns:fx="http://javafx.com/fxml/1" fx:id="mainPanel" maxHeight="-Infinity" maxWidth="-Infinity"
             minHeight="-Infinity" minWidth="-Infinity" prefHeight="400.0" prefWidth="600.0"
             xmlns="http://javafx.com/javafx/8.0.172-ea" fx:controller="controller.MainWindow">
@@ -24,9 +16,11 @@
             <menus>
                 <Menu mnemonicParsing="false" text="File">
                     <items>
-                        <MenuItem mnemonicParsing="false" onAction="#OpenConfiguration" text="Open"/>
-                        <MenuItem mnemonicParsing="false" onAction="#SaveConfigurationToFile" text="Save"/>
-                        <MenuItem mnemonicParsing="false" onAction="#SaveConfigurationToFile" text="Save as"/>
+                        <MenuItem onAction="#newConfiguration" text="New"/>
+                        <MenuItem mnemonicParsing="false" onAction="#openConfiguration" text="Open"/>
+                        <MenuItem fx:id="saveButton" mnemonicParsing="false" onAction="#SaveConfiguration" text="Save"/>
+                        <MenuItem fx:id="saveAsButton" mnemonicParsing="false" onAction="#SaveConfigurationToFile"
+                                  text="Save as"/>
                         <Menu fx:id="recentFiles" mnemonicParsing="false" text="Recent File(s)"/>
                         <MenuItem mnemonicParsing="false" onAction="#closeAction" text="Close"/>
                     </items>
